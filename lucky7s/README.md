@@ -1,12 +1,14 @@
 # Lucky 7s
 
-Find the sum of all positive integers between 0 and 10^N that are divisible by 7, and also divisible by 7 when the digits are reversed. We want to handle N = 11 instantly, and N = 10,000 on the order of 1 minute.
+Find the sum of all positive integers between 0 and 10^N that are divisible by 7, and also divisible by 7 when the digits are reversed. We want to handle N = 11 instantly, and N = 10,000 on the order of a few minutes.
+
+This solution uses only the basics of modular arithmetic (no Fermat's Little Theorem or anything like that), and I'll keep the math notation as simple as possible. No Latex formulas or anything like that.
 
 ## Basic setup
 
-First off, it's okay to treat every number as having exactly N digits, possibly with some leading zeros, because it doesn't matter whether you count leading zeros when you reverse it, because all that does is multiply by some power of 10. For example, it doesn't matter if we treat `259` as `000259`, because `952` and `952000` are both divisible by 7.
+First off, it's okay to treat every number as having exactly N digits, possibly with some leading zeros. It doesn't matter whether you count leading zeros when you reverse it, because all that does is multiply by some power of 10. For example, it doesn't matter if we treat `259` as `000259`, because `952` and `952000` are both divisible by 7.
 
-So let's say that every number has exactly N digits, `d0`, `d1`, `d2`, ... `d[N-1]`, with `0 <= d[i] < 10`. Let's write out the test for divisibility by 7 in terms of the d's:
+So let's say that every number has exactly `N` digits, `d0`, `d1`, `d2`, ... `d[N-1]`, with `0 <= d[i] < 10`. Let's write out the test for divisibility by `7` in terms of the `d`s:
 
 	d0 + 10 d1 + 100 d2 + 1000 d3 + 10000 d4 + 100000 d5 + ... = 0 (mod 7)
 
@@ -16,7 +18,7 @@ Let's simplify that by taking `10^i mod 7`. This is a sequence that goes `1, 3, 
 
 	d0 + 3 d1 + 2 d2 + 6 d3 + 4 d4 + 5 d5 + d6 + 3 d7 + 2 d8 + ... = 0 (mod 7)
 
-Let's combine terms with the same number:
+Let's combine terms with the same coefficient:
 
 	(d0 + d6 + d12 + ...) + 3 (d1 + d7 + d13 + ...) +
 	2 (d2 + d8 + d14 + ...) + 6 (d3 + d9 + d15 + ...) +
@@ -26,7 +28,7 @@ To make things cleaner, let's write those digit sums as `D0` through `D5`. Where
 
 	D0 + 3D1 + 2D2 + 6D3 + 4D4 + 5D5 = 0 (mod 7)  [eq 1]
 
-So that's one of the two equations a number will have to satisfy in order to be counted. The other one is if we reverse the number, so that `d[N-1]` is the first digit and `d0` is the last digit. I'll use `N = 11` as an example:
+So that's one of the two equations a number will have to satisfy in order to be counted. The other one is if we reverse the digits in the number, so that `d[N-1]` is the first digit and `d0` is the last digit. I'll use `N = 11` as an example:
 
 	d10 + 10 d9 + 100 d8 + 1000 d7 + 10000 d6 + 100000 d5 + ... = 0 (mod 7)
 
@@ -45,13 +47,15 @@ Anyway, let's rewrite the two equations we need a number to satisfy, that will w
 	D0 + 3D1 + 2D2 + 6D3 + 4D4 + 5D5 = 0 (mod 7)  [eq 1]
 	D0 + 5D1 + 4D2 + 6D3 + 2D4 + 3D5 = 0 (mod 7)  [eq 3]
 
-These equations are only over 6 variables, and modulo 7, there are only 7 possible values for each variable. So we don't need to use algebra to solve these equations simultaneously. There are only 6^7 possible solutions, which is less than 300,000, so we can just try them all very efficiently.
+These two equations are only over `6` variables, and there are only `7` possible values for each variable, since we're looking modulo `7`. So we don't need to use algebra to solve these equations simultaneously. There are only `6^7` possible solutions, which is less than 300,000, so we could just try them all if we wanted to.
+
+From this point on, we can pretty much forget that we were ever asked about divisibility by 7 or reversing the digits. Now we're summing up the numbers that satisfy eq 1 and 3, which is an equivalent problem.
 
 ## Down to 3 variables
 
-So, one possibility is to find all possible values of `(D0, D1, D2, D3, D4, D5)` that satisfy those equations modulo 7. For instance, one solution is `(3, 0, 6, 4, 0, 1)`. Then we could find all possible ways that `D0 = 3 (mod 7)`. Remember that `D0 = d0 + d6 + d12 + ...`. For `N = 11`, that's only `d0 + d6`, and each one can only take `10` values, so that's only `100` possible values to check. Once we list all the ways that `D0 = 3 (mod 7)`, `D1 = 0 (mod 7)`, `D2 = 6 (mod 7)`, etc., we could combine them efficiently.
+So, one possibility is to find all possible values of `(D0, D1, D2, D3, D4, D5)` that satisfy those equations modulo `7`. For instance, one solution is `(3, 0, 6, 4, 0, 1)`. Then we could find all possible ways that `D0 = 3 (mod 7)`. Remember that `D0 = d0 + d6 + d12 + ...`, so for `N = 11`, that's only `d0 + d6`. As each `d` can only take `10` values, that's only `100` possible combinations to check. (For larger `N`, this could be too large to check efficiently, so we'd have to do something to improve it for large `N`.) Once we list all the ways that `D0 = 3 (mod 7)`, `D1 = 0 (mod 7)`, `D2 = 6 (mod 7)`, etc., we could hopefully combine them efficiently, and then do the same for the other possible values of `(D0, D1, D2, D3, D4, D5)`.
 
-And that would work fine. There's actually one insight that makes this even easier, where we only have 3 variables instead of the 6 variables `D0` through `D5`. Notice that, in eq 1 and eq 3, `D0` and `D3` have the same coefficients, `1` and `6` respectively. So let's combine those into a variable called `X = D0 + 6D3`.
+That's within the realm of feasibility. There's actually one insight that makes this even easier, where we only have 3 variables instead of the 6 variables `D0` through `D5`. Notice that, in eq 1 and eq 3, `D0` and `D3` have the same coefficients, `1` and `6` respectively. So let's combine those into a variable called `X = D0 + 6D3`. Eq 1 and 3 then get reduced to 5 variables:
 
 	X + 3D1 + 2D2 + 4D4 + 5D5 = 0 (mod 7)
 	X + 5D1 + 4D2 + 2D4 + 3D5 = 0 (mod 7)
@@ -71,7 +75,7 @@ And if you do this one more time, multiplying the top by 5 and the bottom by 3 a
 	4X + 5Y + Z = 0 (mod 7)
 	2X + 3Y + Z = 0 (mod 7)
 
-This is plenty good to work with, but if you want, you can combine algebraically reduce those two equations to these two:
+This is plenty good to work with, but if you want, you can algebraically reduce those two equations to these two:
 
 	X = -Y = Z (mod 7)  [eq 4]
 
@@ -85,7 +89,7 @@ As one final simplification, remember that `X` is defined as `D0 + 6D3`, which i
 	Y = D1 + 6D4 = D1 - D4 = d1 - d4 + d7 - d10 + d13 - ...
 	Z = D2 + 6D5 = D2 - D5 = d2 - d5 + d8 - d11 + d14 - ...
 
-So that's how I'll use them, as alternating sums of every 3rd digit.
+Since we're only ever looking at `X`, `Y`, and `Z` mod `7`, this redefinition is fine. So that's how I'll use them, as alternating sums of every 3rd digit.
 
 ## Tallying the possibilities
 
@@ -105,19 +109,21 @@ Let's think about a simpler problem. What's the sum of all 3-digit numbers, each
 	4 x (20 + 30 + 50 + 70) x 4 +
 	(200 + 300 + 500 + 700) x 4 x 4
 
-Equivalently, if you don't mind using fractions for a while (don't worry, they'll cancel out), you can look at the _average_ of the ones place, which is (2 + 3 + 5 + 7) / 4 = 4.25. Similarly the average is 42.5 for the tens place, and 425 for the hundreds. So the total is:
+Equivalently, if you don't mind using fractions for a while (don't worry, they'll cancel out), you can look at the _average_ of the ones place, which is `(2 + 3 + 5 + 7) / 4 = 4.25`. Similarly the average is `42.5` for the tens place, and `425` for the hundreds. So the total is:
 
 	4 x 4 x 4 x (425 + 42.5 + 4.25)
 
-So we're able to get the sum without enumerating all possibilities as long as we have the total (or average) value of `d0`, `10 d1`, and `100 d2`, as well as the number of possibilities for `d0`, `d1`, and `d2`.
+This means we're able to get the sum without enumerating all possibilities as long as we have the total (or average) value of `d0`, `10 d1`, and `100 d2`, as well as the number of possibilities for `d0`, `d1`, and `d2`.
 
-We're going to follow a similar strategy for Lucky 7s, but we need to combine multiple digits together into independent groups, based on the three equations in eq. 4, since any set of d's satisfying the first equation can be paired with any set of d's satisfying each of the other two equations. Right? We can't just list the valid values for `d0`, since it depends on `d3`, `d6`, `d9`, etc. But it doesn't depend on `d1`, `d2`, `d4`, etc. So here are our three independent subtotals:
+We're going to follow a similar strategy for Lucky 7s, but we need to combine multiple digits together into independent groups, based on the three equations in eq 5, since any set of `d`s satisfying the first equation can be paired with any set of `d`s satisfying each of the other two equations. Put another way, we can't just list the valid values for `d0`, since it depends on `d3`, `d6`, `d9`, etc. But it doesn't depend on `d1`, `d2`, `d4`, etc.
+
+Here are our three independent subtotals:
 
 	d0 + 10^3 d3 + 10^6 d6 + 10^9 d9 + ...
 	10 d1 + 10^4 d4 + 10^7 d7 + 10^10 d10 + ...
 	10^2 d2 + 10^5 d5 + 10^8 d8 + 10^11 d11 + ...
 
-We want the number of solutions to each equation in eq 4, and also the sum of all those solutions as listed here. Here's the definitions:
+We want the number of solutions to each equation in eq 5, and also the sum of all those solutions as listed here. Let's define these two things as `n` and `T`:
 
 	n0(X) = number of solutions to:
 		X = d0 - d3 + d6 - d9 + ... (mod 7)
@@ -134,7 +140,7 @@ We want the number of solutions to each equation in eq 4, and also the sum of al
 	T2(Z) = sum over these n2(Z) solutions of:
 		10^2 d2 + 10^5 d5 + 10^8 d8 + 10^11 d11 + ...
 
-So our total contribution from `(X, Y, Z) = (1, 6, 1)` is:
+In these terms, our total contribution from `(X, Y, Z) = (1, 6, 1)` is:
 
 	n0(1) n1(6) n2(1) (T0(1) / n0(1) + T1(6) / n1(6) + T2(1) / n2(1))
 
@@ -194,7 +200,7 @@ The base case is `m = 0`, in which case the equation becomes:
 
 This has one solution when `k = 0`, and no solutions otherwise. Thus `n(0, 0) = 1`, and `n(k, 0) = 0` for `k > 0`.
 
-Now consider `m > 0`, for example, `m = 5`. We can assume `n` values exist for all `m < 5`. So we want to loop through the possible values of `a4`, and add them each to the corresponding `n` values for `m = 4`. For instance, if `k = 4` and `a4 = 1`, then the formula is:
+Now consider `m > 0`, for example, `m = 5`. We can assume values of `n` are available for all `m < 5`. Basically, we've already counted up all the possibilities for `a0` through `a3`, and now we need to add `a4`. So we want to loop through the possible values of `a4`, and add them each to the corresponding values of `n` for `m = 4`. For instance, if `k = 4` and `a4 = 1`, then the formula is:
 
 	k = a0 - a1 + a2 - a3 + a4 (mod 7)
 	4 = a0 - a1 + a2 - a3 + 1 (mod 7)

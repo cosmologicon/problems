@@ -1,14 +1,14 @@
 # Solution to the Lucky 7s problem. See README.md for derivation of relevant formulas.
 
 # Usage:
-#   time python3 lucky7s.py 11
+#   time python lucky7s.py 11
 # To get the sums of the digits:
-#   time python3 lucky7s.py 10000 | sed 's/./+&/g;s/^/0/' | bc
+#   time python lucky7s.py 10000 | sed 's/./+&/g;s/^/0/' | bc
 
 import sys
 
 # Will compute the sum of all numbers between 0 and 10^N that are divisible by 7, and are still
-# divisible by 7 when the sums are reversed.
+# divisible by 7 when the digits are reversed.
 N = int(sys.argv[1])
 sys.setrecursionlimit(N + 20)
 
@@ -24,9 +24,7 @@ Nx, Ny, Nz = (N + 2) // 3, (N + 1) // 3, N // 3
 cache = {}  # memoization cache
 def nT(k, m):
 	if m == 0:
-		# The trivial solution.
-		# When m = 0, the equation is k = 0 (mod 7)
-		# This has 1 solution if k = 0 and no solutions otherwise.
+		# Base case. 1 solution if k = 0 and no solutions otherwise.
 		return (1, 0) if k == 0 else (0, 0)
 	if (k, m) in cache:
 		return cache[(k, m)]

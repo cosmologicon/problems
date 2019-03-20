@@ -75,6 +75,9 @@ def uniq(lmaps):
 	lmaps = set(tuple(sorted(lmap.items())) for lmap in lmaps)
 	return [dict(lmap) for lmap in lmaps]
 
+def unused(lmap):
+	return "".join(c for c in "ABCDFEGHIJKLMNOPQRSTUVWXYZ" if c not in lmap)
+
 # A placement is a 2-tuple of position (corresponding to the start of the word) and direction.
 
 def within(pos):
@@ -151,6 +154,7 @@ for lmap in lmaps:
 	print()
 	for wspots in product(*[spots(lgrid, word) for word in words]):
 		print("".join(lgrid[y][x] for x, y in eliminate(lgrid, wspots)))
+	print("Unmapped letters:", unused(lmap))
 	print()
 
 

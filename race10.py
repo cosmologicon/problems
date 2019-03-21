@@ -8,35 +8,35 @@ from __future__ import print_function, division
 from itertools import product
 
 grid = """
-L	Q	Q	D	H	P	Z	H	G	L	A	A
-J	X	G	H	Q	Z	M	P	O	S	G	H
-S	P	J	A	O	D	L	P	H	S	K	Q
-O	K	S	Q	F	Q	K	D	O	V	A	Q
-S	O	D	P	H	C	G	K	O	U	Q	S
-Q	C	K	G	Z	B	M	H	P	Z	D	M
-M	J	X	Q	O	D	N	V	M	A	J	Q
-K	Q	D	M	S	A	P	D	K	N	O	A
-K	Q	X	J	G	A	X	I	G	M	P	X
-H	X	H	P	K	P	N	K	B	Q	S	N
-Q	H	K	Q	C	M	P	C	P	P	K	P
-B	P	K	S	P	J	D	X	P	O	V	B
+F	R	P	G	Y	U	H	W	K	G	S	C
+J	T	K	F	B	K	G	X	J	T	P	C
+T	T	T	X	C	L	D	R	G	G	R	Y
+K	U	C	X	T	D	P	J	R	G	G	C
+F	F	O	G	K	D	I	D	F	C	C	Y
+D	U	Z	U	R	O	Y	C	W	J	Y	D
+U	K	I	C	R	K	O	C	U	K	G	W
+C	G	L	S	Y	G	G	K	C	C	U	C
+W	B	D	D	L	C	R	R	U	U	J	L
+P	D	G	M	Y	D	G	P	K	C	Y	H
+G	K	G	D	U	K	A	F	G	R	T	U
+L	C	T	J	D	L	D	V	D	X	G	D
 """.upper()
 
 words = """
-BIOPSY
-CONDO
-COUPLET
-DISORGANIZED
-DROWSILY
-GENRE
-INDEFENSIBLE
-PLAYPEN
-PRONOUNCED
-RADIOTHERAPY
-SHORTCHANGE
-SUBTLY
-UNSOLD
-WARHORSE
+APPAREL
+BLACKANDBLUE
+BUILDER
+COUNTRYMAN
+CRANK
+CZARINA
+HEREBY
+INDIVISIBLE
+NOISE
+NUMERICAL
+PRONOUN
+SANITATION
+TENEMENT
+TIMES
 """.upper()
 
 
@@ -142,10 +142,8 @@ def spots(lgrid, word):
 
 def eliminate(lgrid, wspots):
 	cells = set((x, y) for x in range(W) for y in range(H))
-	for spot in wspots:
-		for cell in spot:
-			cells.remove(cell)
-	return sorted(cells)
+	toremove = set(cell for spot in wspots for cell in spot)
+	return sorted(cells - toremove)
 
 for lmap in lmaps:
 	lgrid = mapgrid(grid, lmap)
